@@ -153,7 +153,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             }
         }
 
-        ChannelPipeline p = channel.pipeline();
+        ChannelPipeline p = channel.pipeline();// 链表包含 head tail等
 
         final EventLoopGroup currentChildGroup = childGroup;
         final ChannelHandler currentChildHandler = childHandler;
@@ -170,7 +170,8 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             @Override
             public void initChannel(final Channel ch) throws Exception {
                 final ChannelPipeline pipeline = ch.pipeline();
-                ChannelHandler handler = config.handler();
+                // 此时已经将初始化的三个handler中间的一个移除，会新增自己设置的
+                ChannelHandler handler = config.handler(); // 这个handler对应的是 EchoServer里面的 .handler(new LoggingHandler(LogLevel.INFO))
                 if (handler != null) {
                     pipeline.addLast(handler);
                 }

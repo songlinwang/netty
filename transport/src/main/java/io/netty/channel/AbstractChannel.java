@@ -560,6 +560,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
             boolean wasActive = isActive();
             try {
+                //
                 doBind(localAddress);
             } catch (Throwable t) {
                 safeSetFailure(promise, t);
