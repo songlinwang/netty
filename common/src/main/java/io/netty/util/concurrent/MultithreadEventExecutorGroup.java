@@ -55,6 +55,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
      * @param args              arguments which will passed to each {@link #newChild(Executor, Object...)} call
      */
     protected MultithreadEventExecutorGroup(int nThreads, Executor executor, Object... args) {
+        // fixme 线程选择器 DefaultEventExecutorChooserFactory
         this(nThreads, executor, DefaultEventExecutorChooserFactory.INSTANCE, args);
     }
 
@@ -73,14 +74,21 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         }
 
         if (executor == null) {
+            // 创建线程创建器 每次执行任务都会通过threadFactory创建一个线程new Thread实体执行任务
+            // nioEventLoop线程命名规则niEventLoop-1-**
             executor = new ThreadPerTaskExecutor(newDefaultThreadFactory());
         }
 
         children = new EventExecutor[nThreads];
 
+        // for循环创建NioEventLoop
         for (int i = 0; i < nThreads; i ++) {
             boolean success = false;
             try {
+                // new child创建 EventLoop NioEventLoopGroup#newChild 里面的创建
+                // 保存executor 用来创建线程
+                // 创建一个MpscQueue
+                // 创建一个selector和eventloop做绑定 new NioEventLoop 构造函数 的时候保存下来的
                 children[i] = newChild(executor, args);
                 success = true;
             } catch (Exception e) {
@@ -108,6 +116,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
             }
         }
 
+        // 给新连接绑定eventLoop
         chooser = chooserFactory.newChooser(children);
 
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {

@@ -143,6 +143,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
         SocketChannel ch = SocketUtils.accept(javaChannel());
 
         try {
+            // 检测到新连接后就需要 new channel，同时将改channel注册read监听
             if (ch != null) {
                 buf.add(new NioSocketChannel(this, ch));
                 return 1;

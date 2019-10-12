@@ -133,6 +133,7 @@ public class FastThreadLocal<V> {
      */
     @SuppressWarnings("unchecked")
     public final V get() {
+        // 获取 threadLocalMap
         InternalThreadLocalMap threadLocalMap = InternalThreadLocalMap.get();
         Object v = threadLocalMap.indexedVariable(index);
         if (v != InternalThreadLocalMap.UNSET) {

@@ -28,7 +28,8 @@ import java.util.concurrent.ThreadFactory;
 
 /**
  * Abstract base class for {@link EventLoop}s that execute all its submitted tasks in a single thread.
- *
+ * <p>
+ * 基于单线程的EventLoop抽象类 主要增加了Channel注册到EventLoop上
  */
 public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor implements EventLoop {
 
@@ -76,7 +77,9 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
 
     @Override
     public ChannelFuture register(final ChannelPromise promise) {
+        // Channel与EventLoop创建一个DefaultChannelPromise对象 。通过这个对象就可以实现对异步注册过程的监听
         ObjectUtil.checkNotNull(promise, "promise");
+        // register方法 注册channel到EventLoop上
         promise.channel().unsafe().register(this, promise);
         return promise;
     }
@@ -120,7 +123,6 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
      * Removes a task that was added previously via {@link #executeAfterEventLoopIteration(Runnable)}.
      *
      * @param task to be removed.
-     *
      * @return {@code true} if the task was removed as a result of this call.
      */
     @UnstableApi
@@ -161,5 +163,6 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
     /**
      * Marker interface for {@link Runnable} that will not trigger an {@link #wakeup(boolean)} in all cases.
      */
-    interface NonWakeupRunnable extends Runnable { }
+    interface NonWakeupRunnable extends Runnable {
+    }
 }
