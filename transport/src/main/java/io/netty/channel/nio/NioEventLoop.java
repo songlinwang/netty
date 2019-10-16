@@ -628,7 +628,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             // null out entry in the array to allow to have it GC'ed once the Channel close
             // See https://github.com/netty/netty/issues/2363
             selectedKeys.keys[i] = null;
-
+            // nioChannel
             final Object a = k.attachment();
 
             if (a instanceof AbstractNioChannel) {
@@ -650,7 +650,13 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
     }
 
-    private void processSelectedKey(SelectionKey k, AbstractNioChannel ch) { //处理IO事件
+    /**
+     * 处理IO事件
+     *
+     * @param k
+     * @param ch
+     */
+    private void processSelectedKey(SelectionKey k, AbstractNioChannel ch) {
         final AbstractNioChannel.NioUnsafe unsafe = ch.unsafe();
         if (!k.isValid()) {
             final EventLoop eventLoop;
@@ -675,14 +681,17 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
 
         try {
-            int readyOps = k.readyOps(); // 获取就绪的Io事件的ops
+            // 获取就绪的Io事件的ops
+            int readyOps = k.readyOps();
             // We first need to call finishConnect() before try to trigger a read(...) or write(...) as otherwise
             // the NIO JDK channel implementation may throw a NotYetConnectedException.
-            if ((readyOps & SelectionKey.OP_CONNECT) != 0) { // 对OP_CONNECT事件感兴趣
+            if ((readyOps & SelectionKey.OP_CONNECT) != 0) {
+                // 对OP_CONNECT事件感兴趣
                 // remove OP_CONNECT as otherwise Selector.select(..) will always return without blocking
                 // See https://github.com/netty/netty/issues/924
                 int ops = k.interestOps();
-                ops &= ~SelectionKey.OP_CONNECT; //移除 OP_CONNECT 事件
+                //移除 OP_CONNECT 事件
+                ops &= ~SelectionKey.OP_CONNECT;
                 k.interestOps(ops);
                 // 完成连接
                 unsafe.finishConnect();
@@ -793,7 +802,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         Selector selector = this.selector;
         try {
             // 全文的 NIO Selector 空轮询，指的是 epoll cpu 100% 的 bug 。
-            int selectCnt = 0; // select操作的计数器。主要用于记录Selector空轮询次数 所以每次轮询完成（例如超时） 重置selectCnt为1
+            // select操作的计数器。主要用于记录Selector空轮询次数 所以每次轮询完成（例如超时） 重置selectCnt为1
+            int selectCnt = 0;
             long currentTimeNanos = System.nanoTime();
             long selectDeadLineNanos = currentTimeNanos + delayNanos(currentTimeNanos);
 
@@ -850,9 +860,16 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                     break;
                 }
 
+                /**
+                 * 一般来说没有事件 select会一直阻塞 不会出现下面的逻辑
+                 * 但是出现后就会出现空轮询bug while(true) 中上面的逻辑以及break都会被忽略掉
+                 * 这时候就需要一个标识符来表示轮询了几次 次数太多 重建Selector
+                 */
                 long time = System.nanoTime();
                 if (time - TimeUnit.MILLISECONDS.toNanos(timeoutMillis) >= currentTimeNanos) {
                     // timeoutMillis elapsed without anything selected.
+                    // 超时的话 重置为1 证明逻辑正常
+                    // 不超时的话 selectCnt之前有代码 一直+1  这时候会进入到下面的else if逻辑里面 重建selector
                     selectCnt = 1;
                 } else if (SELECTOR_AUTO_REBUILD_THRESHOLD > 0 &&
                         selectCnt >= SELECTOR_AUTO_REBUILD_THRESHOLD) {

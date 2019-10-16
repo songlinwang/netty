@@ -243,7 +243,8 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         if (localAddress == null) {
             throw new IllegalStateException("localAddress not set");
         }
-        return doBind(localAddress);//绑定本地地址 (包括端口)
+        //绑定本地地址 (包括端口)
+        return doBind(localAddress);
     }
 
     /**
@@ -318,8 +319,10 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {
-            channel = channelFactory.newChannel(); // 会使用ReflectiveChannelFactory创建NioServerSocketChannel对象
-            init(channel); // 初始化channel配置,初始化以后 应该有三个处理器handler head tail 以及初始化的一个
+            // 会使用ReflectiveChannelFactory创建NioServerSocketChannel对象
+            channel = channelFactory.newChannel();
+            // 初始化channel配置,初始化以后 应该有三个处理器handler head tail 以及初始化的一个
+            init(channel);
         } catch (Throwable t) {
             if (channel != null) {
                 // channel can be null if newChannel crashed (eg SocketException("too many open files"))
@@ -332,7 +335,8 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         }
 
         // register的本质就是将Channel注册到NioEventLoop的Selector中进行绑定
-        ChannelFuture regFuture = config().group().register(channel); // 将channel注册到EventLoop SingleThreadEventLoop 的register 调用的是channel的register
+        // 将channel注册到EventLoop SingleThreadEventLoop 的register 调用的是channel的register
+        ChannelFuture regFuture = config().group().register(channel);
         if (regFuture.cause() != null) {
             if (channel.isRegistered()) {
                 channel.close();
